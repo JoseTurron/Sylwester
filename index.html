@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <!-- Preload fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="preload" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@700&display=swap" rel="preload" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="preload" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #background-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .logo {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            height: auto;
+            z-index: 10;
+            opacity: 1;
+            transition: opacity 1s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: opacity;
+        }
+
+        .logo.hidden {
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            transform: translateZ(0);
+            /* Hardware acceleration */
+            backface-visibility: hidden;
+            perspective: 1000;
+            will-change: transform;
+        }
+
+        #countdown-canvas {
+            z-index: 3;
+        }
+
+        #fireworks-canvas {
+            z-index: 2;
+            opacity: 1;
+        }
+
+        #confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            z-index: 4;
+            border-radius: 50%;
+            animation-timing-function: linear;
+            animation-iteration-count: 1;
+            animation-fill-mode: forwards;
+        }
+
+        .confetti--animation-slow {
+            animation: confetti-slow 4.25s linear 1 forwards;
+        }
+
+        .confetti--animation-medium {
+            animation: confetti-medium 3.75s linear 1 forwards;
+        }
+
+        .confetti--animation-fast {
+            animation: confetti-fast 3.25s linear 1 forwards;
+        }
+
+        @keyframes confetti-slow {
+            0% {
+                transform: translate3d(0, 0, 0) rotateX(0) rotateY(0);
+            }
+
+            100% {
+                transform: translate3d(25px, 105vh, 0) rotateX(360deg) rotateY(180deg);
+            }
+        }
+
+        @keyframes confetti-medium {
+            0% {
+                transform: translate3d(0, 0, 0) rotateX(0) rotateY(0);
+            }
+
+            100% {
+                transform: translate3d(100px, 105vh, 0) rotateX(100deg) rotateY(360deg);
+            }
+        }
+
+        @keyframes confetti-fast {
+            0% {
+                transform: translate3d(0, 0, 0) rotateX(0) rotateY(0);
+            }
+
+            100% {
+                transform: translate3d(-50px, 105vh, 0) rotateX(10deg) rotateY(250deg);
+            }
+        }
+
+        #celebration {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: min(10vw, 120px);
+            font-family: 'Lato', 'Arial', sans-serif;
+            font-weight: bold;
+            color: rgb(127, 163, 184);
+            text-align: center;
+            text-shadow:
+                0 0 20px rgba(255, 255, 255, 0.8),
+                0 0 30px rgba(255, 255, 255, 0.6),
+                0 0 40px rgba(255, 255, 255, 0.4);
+            z-index: 5;
+            padding: 20px;
+            white-space: pre-wrap;
+            line-height: 0.5;
+        }
+
+        @keyframes textGlow {
+            0% {
+                text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff;
+            }
+
+            50% {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+            }
+
+            100% {
+                text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff;
+            }
+        }
+
+        #celebration span {
+            display: block;
+            animation: textGlow 2s infinite;
+        }
+
+        #time-input {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        #time-input button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            min-width: 200px;
+        }
+
+        #time-input button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        #time-input label {
+            color: white;
+        }
+
+        #time-input input {
+            width: 60px;
+            padding: 5px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 5px;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff, 0 0 50px #ff0;
+            }
+
+            50% {
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #ff0;
+            }
+
+            100% {
+                text-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #fff, 0 0 50px #ff0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="confetti-container"></div>
+    <img src="bg.jpg" id="background-image" alt="Background">
+    <img src="logo.png" class="logo" alt="Logo">
+
+    <div id="time-input">
+        <button onclick="startCountdownToMidnight()">Count to Midnight</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <label>Hours: <input type="number" id="hours" min="0" max="23" value="0"></label>
+            <label>Minutes: <input type="number" id="minutes" min="0" max="59" value="5"></label>
+            <label>Seconds: <input type="number" id="seconds" min="0" max="59" value="0"></label>
+        </div>
+        <button onclick="startCountdown()">Start Custom Countdown</button>
+    </div>
+
+    <canvas id="fireworks-canvas"></canvas>
+    <canvas id="countdown-canvas"></canvas>
+
+    <div id="celebration">
+        <span>Szczęśliwego</span>
+        <span>Nowego Roku</span>
+        <span>2025!</span>
+    </div>
+    <script>
+        // ==================== GLOBAL VARIABLES ====================
+    let countdownInterval = null;
+    let confettiInterval = null;
+    let currentSeconds = 0;
+    let totalSeconds = 0;
+    let isCountingDown = false;
+    let isAnimatedCountdown = false;
+    let currentNumber = 10;
+    let startTime = Date.now();
+    let scale = 1;
+    let opacity = 1;
+    const animationDuration = 1000;
+    let stars = [];
+    let fireworks = [];
+    let isFireworksStarted = false;
+
+    // Canvas setup
+    const countdownCanvas = document.getElementById('countdown-canvas');
+    const fireworksCanvas = document.getElementById('fireworks-canvas');
+    const ctxCountdown = countdownCanvas.getContext('2d');
+    const ctxFireworks = fireworksCanvas.getContext('2d');
+
+    // ==================== CLASSES ====================
+    class Star {
+        constructor(canvasWidth, canvasHeight) {
+            this.x = Math.random() * canvasWidth;
+            this.y = Math.random() * canvasHeight;
+            this.size = Math.random() * 2;
+            this.blinkRate = Math.random() * 0.02;
+            this.alpha = Math.random();
+            this.increasing = true;
+        }
+
+        update() {
+            if (this.increasing) {
+                this.alpha += this.blinkRate;
+                if (this.alpha >= 1) {
+                    this.increasing = false;
+                }
+            } else {
+                this.alpha -= this.blinkRate;
+                if (this.alpha <= 0.3) {
+                    this.increasing = true;
+                }
+            }
+        }
+
+        draw(ctx) {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+            ctx.fill();
+        }
+    }
+
+    class Firework {
+        constructor(canvasWidth, canvasHeight) {
+            const startPositions = [
+                {x: Math.random() * canvasWidth, y: canvasHeight},          // bottom
+                {x: 0, y: Math.random() * (canvasHeight * 0.7)},           // left
+                {x: canvasWidth, y: Math.random() * (canvasHeight * 0.7)}  // right
+            ];
+            const start = startPositions[Math.floor(Math.random() * startPositions.length)];
+            
+            this.x = start.x;
+            this.y = start.y;
+            this.sx = this.x;
+            this.sy = this.y;
+            this.tx = Math.random() * canvasWidth;
+            this.ty = Math.random() * (canvasHeight * 0.5);
+            this.speed = Math.random() * 3 + 5;
+            this.angle = Math.atan2(this.ty - this.sy, this.tx - this.sx);
+            this.vx = Math.cos(this.angle) * this.speed;
+            this.vy = Math.sin(this.angle) * this.speed;
+            this.brightness = Math.random() * 50 + 50;
+            this.particles = [];
+            this.exploded = false;
+        }
+
+        update() {
+            if (!this.exploded) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.12; // Gravity
+
+                if (this.vy >= 0 || this.y < this.ty) {
+                    this.explode();
+                }
+            }
+
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                this.particles[i].update();
+                if (this.particles[i].alpha <= 0) {
+                    this.particles.splice(i, 1);
+                }
+            }
+        }
+
+        explode() {
+        // Create more particles
+        for (let i = 0; i < 150; i++) { // Increased from 100 to 150
+            this.particles.push(new Particle(this.x, this.y));
+        }
+        this.exploded = true;
+    }
+
+        draw(ctx) {
+            if (!this.exploded) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            }
+
+            for (const particle of this.particles) {
+                particle.draw(ctx);
+            }
+        }
+    }
+
+    class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.speed = Math.random() * 8 + 4; // Increased speed range
+        this.angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(this.angle) * this.speed;
+        this.vy = Math.sin(this.angle) * this.speed;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.01 + 0.005; // Slower decay
+        this.color = Math.random() * 360;
+        this.lifetime = Math.random() * 50 + 30; // Longer lifetime
+        this.age = 0;
+        this.size = Math.random() * 2 + 1.5; // Varying particle sizes
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.08; // Reduced gravity for slower fall
+        this.age++;
+        
+        // Smoother fade out
+        if (this.age < this.lifetime) {
+            this.alpha -= this.decay;
+        } else {
+            this.alpha -= 0.02; // Gentle fade after lifetime
+        }
+    }
+
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.color}, 100%, 70%, ${this.alpha})`;
+        ctx.fill();
+    }
+}
+
+    // ==================== HELPER FUNCTIONS ====================
+    function formatTime(seconds) {
+        if (seconds <= 60) {
+            return seconds.toString();
+        }
+        
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        
+        if (h > 0) {
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function resizeCanvas() {
+        countdownCanvas.width = window.innerWidth;
+        countdownCanvas.height = window.innerHeight;
+        fireworksCanvas.width = window.innerWidth;
+        fireworksCanvas.height = window.innerHeight;
+        
+        // Reset transformations
+        ctxCountdown.setTransform(1, 0, 0, 1, 0, 0);
+        ctxFireworks.setTransform(1, 0, 0, 1, 0, 0);
+        
+        // Handle DPI
+        const dpr = window.devicePixelRatio || 1;
+        ctxCountdown.scale(dpr, dpr);
+        ctxFireworks.scale(dpr, dpr);
+        
+        stars = [];
+        createStars();
+    }
+
+    function createStars() {
+        for (let i = 0; i < 200; i++) {
+            stars.push(new Star(fireworksCanvas.width, fireworksCanvas.height));
+        }
+    }
+
+    // Initialize canvas
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+// ==================== MAIN FUNCTIONALITY ====================
+function startCountdownToMidnight() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0);
+    
+    const diffSeconds = Math.floor((midnight - now) / 1000);
+    
+    // If we're past midnight, don't start the countdown
+    if (diffSeconds <= 0) {
+        return;
+    }
+    
+    const hours = Math.floor(diffSeconds / 3600);
+    const minutes = Math.floor((diffSeconds % 3600) / 60);
+    const seconds = diffSeconds % 60;
+    
+    document.getElementById('hours').value = hours;
+    document.getElementById('minutes').value = minutes;
+    document.getElementById('seconds').value = seconds;
+    
+    startCountdown();
+}
+
+async function startCountdown() {
+    if (isCountingDown) return;
+    
+    // Wait for font to load
+    await document.fonts.load('bold 16px "Share Tech Mono"');
+    
+    const hours = parseInt(document.getElementById('hours').value) || 0;
+    const minutes = parseInt(document.getElementById('minutes').value) || 0;
+    const seconds = parseInt(document.getElementById('seconds').value) || 0;
+    
+    totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    currentSeconds = totalSeconds;
+    
+    if (totalSeconds <= 0) return;
+    
+    isCountingDown = true;
+    document.getElementById('time-input').style.display = 'none';
+    
+    if (currentSeconds <= 90 * 60) {
+        startConfetti();
+    }
+    
+    updateCountdown();  // Initial render
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown() {
+    if (currentSeconds <= 0) {
+        // Wait for font to load before showing celebration
+        document.fonts.load('700 16px Lato').then(() => {
+            document.getElementById('celebration').style.display = 'block';
+            startFireworks();
+        });
+        return;
+    }
+
+    if (currentSeconds <= 11 && !isAnimatedCountdown) {
+        clearInterval(countdownInterval);
+        startFinalCountdown();
+        return;
+    }
+    
+    // Check if we should start confetti (at 90-minute mark)
+    if (currentSeconds <= 90 * 60 && !confettiInterval) {
+        startConfetti();
+    }
+    
+    const currentValue = currentSeconds;
+    const ctx = ctxCountdown;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, countdownCanvas.width, countdownCanvas.height);
+    
+    const showLogo = currentSeconds > 1200 && currentSeconds % 1200 <= 60;
+    const cornerLogo = document.querySelector('.logo');
+    
+    // Calculate transitions
+    const fadeInDuration = 15;
+    const fadeOutDuration = 15;
+    const holdDuration = 30;
+    
+    const secondsIntoTransition = currentSeconds % 1200;
+    let fadeProgress;
+    
+    if (secondsIntoTransition <= fadeInDuration) {
+        fadeProgress = secondsIntoTransition / fadeInDuration;
+    } else if (secondsIntoTransition <= fadeInDuration + holdDuration) {
+        fadeProgress = 1;
+    } else if (secondsIntoTransition <= fadeInDuration + holdDuration + fadeOutDuration) {
+        fadeProgress = 1 - ((secondsIntoTransition - (fadeInDuration + holdDuration)) / fadeOutDuration);
+    } else {
+        fadeProgress = 0;
+    }
+
+    // Smooth easing function
+    const easeInOutCubic = t => t < .5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+    const smoothProgress = easeInOutCubic(fadeProgress);
+
+    const centerX = countdownCanvas.width / 2;
+    const centerY = countdownCanvas.height / 2;
+    
+    // Draw main countdown
+    if (!showLogo || smoothProgress < 0.99) {
+        const normalFontSize = currentSeconds <= 60 
+            ? Math.min(countdownCanvas.width / 3, countdownCanvas.height / 1.2)
+            : (currentSeconds >= 3600)
+                ? Math.min(countdownCanvas.width / 5, countdownCanvas.height / 1.5)
+                : Math.min(countdownCanvas.width / 4, countdownCanvas.height / 1.5);
+
+        ctx.save();
+        ctx.font = `bold ${normalFontSize}px "Share Tech Mono", monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Add pulsating effect for last minute
+        if (currentSeconds <= 60 && currentSeconds > 10 && !showLogo) {
+            const pulse = Math.sin(Date.now() / 200) * 0.1 + 0.95;
+            ctx.translate(centerX, centerY);
+            ctx.scale(pulse, pulse);
+            ctx.translate(-centerX, -centerY);
+        }
+        
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = normalFontSize / 8;
+        ctx.fillStyle = 'white';
+        ctx.globalAlpha = showLogo ? (1 - smoothProgress) : 1;
+        ctx.fillText(formatTime(currentSeconds), centerX, centerY);
+        ctx.restore();
+    }
+    
+    // Draw logo with transition
+    if (showLogo && smoothProgress > 0.01) {
+        const logoImg = document.querySelector('.logo');
+        cornerLogo.style.opacity = Math.max(0, 1 - smoothProgress * 1.2);
+        
+        const maxWidth = countdownCanvas.width * 0.75;
+        const maxHeight = countdownCanvas.height * 0.75;
+        
+        let logoWidth = maxWidth;
+        let logoHeight = (logoWidth / logoImg.width) * logoImg.height;
+        
+        if (logoHeight > maxHeight) {
+            logoHeight = maxHeight;
+            logoWidth = (logoHeight / logoImg.height) * logoImg.width;
+        }
+        
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, smoothProgress * 1.2);
+        ctx.drawImage(
+            logoImg,
+            centerX - logoWidth / 2,
+            centerY - logoHeight / 2,
+            logoWidth,
+            logoHeight
+        );
+        ctx.restore();
+    } else {
+        cornerLogo.style.opacity = 1;
+    }
+
+    // Draw small countdown below logo
+    if (showLogo && smoothProgress > 0.3) {
+        const smallFontSize = Math.min(countdownCanvas.width / 4, countdownCanvas.height / 1.5) * 0.3;
+        ctx.save();
+        ctx.font = `bold ${smallFontSize}px "Share Tech Mono", monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = smallFontSize / 8;
+        ctx.fillStyle = 'white';
+        ctx.globalAlpha = Math.min(1, (smoothProgress - 0.3) * 1.5);
+        ctx.fillText(formatTime(currentSeconds), centerX, countdownCanvas.height * 0.8);
+        ctx.restore();
+    }
+
+    // Check for transition to final countdown
+    if (currentSeconds === 11) {
+        currentSeconds--;
+        clearInterval(countdownInterval);
+        startFinalCountdown();
+        return;
+    }
+
+    currentSeconds--;
+}
+
+function startFinalCountdown() {
+    isAnimatedCountdown = true;
+    currentNumber = 11;
+    startTime = Date.now();
+    
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    ctxCountdown.setTransform(1, 0, 0, 1, 0, 0);
+    ctxCountdown.clearRect(0, 0, countdownCanvas.width, countdownCanvas.height);
+    
+    drawNumber();
+}
+
+function drawNumber() {
+    if (currentNumber <= 0) {
+        document.getElementById('celebration').style.display = 'block';
+        startFireworks();
+        return;
+    }
+
+    ctxCountdown.setTransform(1, 0, 0, 1, 0, 0);
+    ctxCountdown.clearRect(0, 0, countdownCanvas.width, countdownCanvas.height);
+    
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / animationDuration, 1);
+    
+    scale = 1 + progress;
+    opacity = 1 - progress;
+
+    const centerX = countdownCanvas.width / 2;
+    const centerY = countdownCanvas.height / 2;
+    
+    const fontSize = Math.min(countdownCanvas.width / 2.5, countdownCanvas.height / 1.2);
+    ctxCountdown.font = `bold ${fontSize}px "Share Tech Mono", monospace`;
+    ctxCountdown.textAlign = 'center';
+    ctxCountdown.textBaseline = 'middle';
+    
+    ctxCountdown.save();
+    ctxCountdown.translate(centerX, centerY);
+    ctxCountdown.scale(scale, scale);
+    
+    ctxCountdown.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    ctxCountdown.shadowBlur = fontSize / 8;
+    ctxCountdown.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+    ctxCountdown.fillText(currentNumber.toString(), 0, 0);
+    
+    ctxCountdown.restore();
+
+    if (progress >= 1) {
+        currentNumber--;
+        startTime = Date.now();
+        scale = 1;
+        opacity = 1;
+    }
+
+    requestAnimationFrame(drawNumber);
+}
+
+        
+// Update startFireworks to run continuously
+function startFireworks() {
+    isFireworksStarted = true;
+    
+    // Initial batch of fireworks
+    for(let i = 0; i < 5; i++) { // Increased initial fireworks
+        fireworks.push(new Firework(fireworksCanvas.width, fireworksCanvas.height));
+    }
+    
+    // Continue launching fireworks indefinitely
+    setInterval(() => {
+        if (fireworks.length < 8) {  // Increased maximum fireworks
+            fireworks.push(new Firework(fireworksCanvas.width, fireworksCanvas.height));
+        }
+    }, 300);  // Reduced interval between launches
+}
+
+        function startConfetti() {
+            const container = document.getElementById('confetti-container');
+            if (!container || confettiInterval) return;  // Add check for existing interval
+            
+            if (confettiInterval) clearInterval(confettiInterval);
+            
+            confettiInterval = setInterval(() => {
+                if (!isCountingDown) {
+                    clearInterval(confettiInterval);
+                    return;
+                }
+
+                const ninetyMinutes = 90 * 60;
+                const density = Math.max(0, 1 - (currentSeconds / ninetyMinutes));
+                const baseCount = Math.floor(density * 10) + 1;
+                
+                for (let i = 0; i < baseCount; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti confetti--animation-' + 
+                        ['slow', 'medium', 'fast'][Math.floor(Math.random() * 3)];
+                    
+                    const size = (Math.random() * 5 + 5) + 'px';
+                    const colors = ['#fce18a', '#ff726d', '#b48def', '#f4306d', '#FFD700', '#4169E1'];
+                    
+                    confetti.style.width = size;
+                    confetti.style.height = size;
+                    confetti.style.left = (Math.random() * 100) + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.opacity = 0.7 + (density * 0.3);
+                    
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        if (confetti.parentNode === container) {
+                            container.removeChild(confetti);
+                        }
+                    }, 4300);
+                }
+            }, 40);
+        }
+
+        // ==================== ANIMATION LOOP ====================
+        // Update the animation loop to use a much lower opacity for clearing
+// Update the animation loop to preserve background
+requestAnimationFrame(function animate() {
+    // First clear the canvas completely
+    ctxFireworks.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+    
+    // Draw semi-transparent dark overlay (opacity 0.2)
+    ctxFireworks.globalAlpha = 0.8;  // Set overlay opacity
+    ctxFireworks.fillStyle = 'rgba(10, 10, 42, 0.2)';
+    ctxFireworks.fillRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+    
+    // Reset opacity for stars and fireworks
+    ctxFireworks.globalAlpha = 1;
+    
+    // Draw stars with full opacity
+    for (let star of stars) {
+        star.update();
+        star.draw(ctxFireworks);
+    }
+    
+    if (isFireworksStarted) {
+        // Save the current canvas state
+        ctxFireworks.save();
+        // Enhanced blending for more vibrant fireworks
+        ctxFireworks.globalCompositeOperation = 'lighter';
+        
+        for (let i = fireworks.length - 1; i >= 0; i--) {
+            fireworks[i].update();
+            fireworks[i].draw(ctxFireworks);
+            
+            // Only remove when particles are almost completely faded
+            if (fireworks[i].exploded && 
+                (fireworks[i].particles.length === 0 || 
+                 fireworks[i].particles.every(p => p.alpha <= 0.05))) {
+                fireworks.splice(i, 1);
+            }
+        }
+        
+        ctxFireworks.restore();
+    }
+    
+    requestAnimationFrame(animate);
+});
+    </script>
+</body>
+
+</html>
